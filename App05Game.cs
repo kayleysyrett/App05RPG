@@ -104,7 +104,7 @@ namespace App05MonoGame
             restartButton = new Button(arialFont,
                 Content.Load<Texture2D>("Controls/button-icon-png-200"))
             {
-                Position = new Vector2(1100, 600),
+                Position = new Vector2(1750, 950),
                 Text = "Quit",
                 Scale = 0.6f
             };
@@ -131,10 +131,9 @@ namespace App05MonoGame
         /// </summary>
         private void SetupAsteroid()
         {
-            Texture2D asteroid = Content.Load<Texture2D>(
-               "Actors/Stones2Filled_01");
 
-            asteroidController.CreateAsteroid(graphicsDevice, asteroid);
+            asteroidController.LoadImages(Content);
+            asteroidController.CreateAsteroid();
 
     }
 

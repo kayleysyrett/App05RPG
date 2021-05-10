@@ -1,18 +1,17 @@
 ﻿using App05MonoGame.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
+
+
 
 
 namespace App05MonoGame.Controllers
 {
-    public enum CoinColours
-    {
-        copper = 100,
-        Silver = 200,
-        Gold = 500
-    }
+
 
     /// <summary>
     /// This class creates a list of coins which
@@ -26,21 +25,46 @@ namespace App05MonoGame.Controllers
     {
         private SoundEffect asteroidEffect;
 
-        private readonly List<Sprite> asteroids;        
+        private readonly List<Sprite> asteroids;
+
+        private Texture2D[] images;
+
+        private Random generator;
+
+        private double timer;
+
+        private double maxTime;
 
         public AsteroidController()
         {
             asteroids = new List<Sprite>();
+            images = new Texture2D[3];
+            generator = new Random();
+            maxTime = 1.0;
+
         }
         /// <summary>
-        /// Create an animated sprite of a copper coin
-        /// which could be collected by the player for a score
+        /// Loads three different asteroid images
+        /// and puts them in the array
         /// </summary>
-        public void CreateAsteroid(GraphicsDevice graphics, Texture2D asteroidImage)
+        public void LoadImages(ContentManager content)
         {
             asteroidEffect = SoundController.GetSoundEffect("Flame");
+            images [0] = content.Load<Texture2D>("Actors/Stones2Filled_01");
+            images [1] = content.Load<Texture2D>("Actors/Stones2Filled_01");
+            images [2] = content.Load<Texture2D>("Actors/Stones2Filled_01");
 
-            Sprite asteroidSprite = new Sprite(asteroidImage, 1200, 500)
+        }
+
+        public void CreateAsteroid()
+        {
+            int imageNumber = generator.Next(3);
+
+            Texture2D asteroidImage = images[imageNumber];
+
+            int y = generator.Next(900) + 100;
+
+            Sprite asteroidSprite = new Sprite(asteroidImage, 1900, y)
             {
                 Direction = new Vector2(-1, 0),
                 Speed = 100,
@@ -69,6 +93,13 @@ namespace App05MonoGame.Controllers
 
         public void Update(GameTime gameTime)
         {
+            timer = timer - gameTime.ElapsedGameTime.TotalSeconds;
+            if(timer <= 0 ){
+
+                CreateAsteroid();
+                timer = maxTime;
+            }
+
             foreach(Sprite asteroid in asteroids)
             {
                 asteroid.Update(gameTime);
