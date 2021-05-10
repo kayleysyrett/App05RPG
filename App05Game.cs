@@ -22,8 +22,8 @@ namespace App05MonoGame
     {
         #region Constants
 
-        public const int HD_Height = 720;
-        public const int HD_Width = 1280;
+        public const int HD_Height = 1080;
+        public const int HD_Width = 1920;
 
         #endregion
 
@@ -39,16 +39,14 @@ namespace App05MonoGame
         private Texture2D backgroundImage;
         private SoundEffect flameEffect;
 
-        private readonly CoinsController coinsController;
-
         private PlayerSprite shipSprite;
         private Sprite asteroidSprite;
 
-        private AnimatedPlayer playerSprite;
-        private AnimatedSprite enemySprite;
-
         private Button restartButton;
 
+        private AsteroidController asteroidController;
+
+        //should be in player 
         private int score;
         private int health;
 
@@ -59,8 +57,6 @@ namespace App05MonoGame
             graphicsManager = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-
-            coinsController = new CoinsController();
         }
 
         /// <summary>
@@ -79,6 +75,8 @@ namespace App05MonoGame
             score = 0;
             health = 100;
 
+            asteroidController = new AsteroidController();
+
             base.Initialize();
         }
 
@@ -90,12 +88,12 @@ namespace App05MonoGame
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             backgroundImage = Content.Load<Texture2D>(
-                "backgrounds/green_background720p");
+                "backgrounds/spacebackground");
 
             // Load Music and SoundEffects
 
             SoundController.LoadContent(Content);
-            SoundController.PlaySong("Adventure");
+            //SoundController.PlaySong("Adventure");
             flameEffect = SoundController.GetSoundEffect("Flame");
 
             // Load Fonts
@@ -118,13 +116,6 @@ namespace App05MonoGame
             SetupSpaceShip();
             SetupAsteroid();
 
-            // animated sprites suitable for pacman type game
-
-            SetupAnimatedPlayer();
-            SetupEnemy();
-
-            Texture2D coinSheet = Content.Load<Texture2D>("Actors/coin_copper");
-            coinsController.CreateCoin(graphicsDevice, coinSheet);
         }
 
         private void RestartButton_click(object sender, System.EventArgs e)
@@ -143,14 +134,7 @@ namespace App05MonoGame
             Texture2D asteroid = Content.Load<Texture2D>(
                "Actors/Stones2Filled_01");
 
-            asteroidSprite = new Sprite(asteroid, 1200, 500)
-            {
-                Direction = new Vector2(-1, 0),
-                Speed = 100,
-
-                Rotation = MathHelper.ToRadians(3),
-                RotationSpeed = 2f,
-            };
+            asteroidController.CreateAsteroid(graphicsDevice, asteroid);
 
     }
 
@@ -174,107 +158,27 @@ namespace App05MonoGame
 
 
         /// <summary>
-        /// This is a Sprite with four animations for the four
-        /// directions, up, down, left and right
-        /// </summary>
-        private void SetupAnimatedPlayer()
-        {
-            Texture2D sheet4x3 = Content.Load<Texture2D>("Actors/rsc-sprite-sheet1");
-
-            AnimationController contoller = new AnimationController(graphicsDevice, sheet4x3, 4, 3);
-
-            string[] keys = new string[] { "Down", "Left", "Right", "Up" };
-            contoller.CreateAnimationGroup(keys);
-
-            playerSprite = new AnimatedPlayer()
-            {
-                CanWalk = true,
-                Scale = 2.0f,
-
-                Position = new Vector2(200, 200),
-                Speed = 200,
-                Direction = new Vector2(1, 0),
-
-                Rotation = MathHelper.ToRadians(0),
-                RotationSpeed = 0f
-            };
-
-            contoller.AppendAnimationsTo(playerSprite);
-        }
-
-        /// <summary>
         /// This is an enemy Sprite with four animations for the four
         /// directions, up, down, left and right.  Has no intelligence!
         /// </summary>
-        private void SetupEnemy()
-        {
-            Texture2D sheet4x3 = Content.Load<Texture2D>("Actors/rsc-sprite-sheet3");
 
-            AnimationController manager = new AnimationController(graphicsDevice, sheet4x3, 4, 3);
-
-            string[] keys = new string[] { "Down", "Left", "Right", "Up" };
-
-            manager.CreateAnimationGroup(keys);
-
-            enemySprite = new AnimatedSprite()
-            {
-                Scale = 2.0f,
-
-                Position = new Vector2(1000, 200),
-                Direction = new Vector2(-1, 0),
-                Speed = 50,
-
-                Rotation = MathHelper.ToRadians(0),
-            };
-
-            manager.AppendAnimationsTo(enemySprite);
-            enemySprite.PlayAnimation("Left");
-        }
-
-
-        /// <summary>
-        /// Called 60 frames/per second and updates the positions
-        /// of all the drawable objects
-        /// </summary>
-        /// <param name="gameTime">
-        /// Can work out the elapsed time since last call if
-        /// you want to compensate for different frame rates
-        /// </param>
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || 
                 Keyboard.GetState().IsKeyDown(Keys.Escape)) Exit();
+
+
+            //maybe put a pause method in here 
 
             restartButton.Update(gameTime);
 
             // Update Asteroids
 
             shipSprite.Update(gameTime);
-            asteroidSprite.Update(gameTime);
-
-            if (shipSprite.HasCollided(asteroidSprite) && shipSprite.IsAlive)
-            {
-                flameEffect.Play();
-
-                shipSprite.IsActive = false;
-                shipSprite.IsAlive = false;
-                shipSprite.IsVisible = false;
-            }
+            asteroidController.Update(gameTime);
+            asteroidController.HasCollided(shipSprite);
 
             // Update Chase Game
-
-            playerSprite.Update(gameTime);
-            enemySprite.Update(gameTime);
-
-            if (playerSprite.HasCollided(enemySprite))
-            {
-                playerSprite.IsActive = false;
-                playerSprite.IsAlive = false;
-                enemySprite.IsActive = false;
-            }
-
-            coinsController.Update(gameTime);
-            coinsController.HasCollided(playerSprite);
 
             base.Update(gameTime);
         }
@@ -297,13 +201,11 @@ namespace App05MonoGame
             // Draw asteroids game
 
             shipSprite.Draw(spriteBatch);
-            asteroidSprite.Draw(spriteBatch);
+            asteroidController.Draw(spriteBatch);
+
 
             // Draw Chase game
 
-            playerSprite.Draw(spriteBatch);
-            coinsController.Draw(spriteBatch);
-            enemySprite.Draw(spriteBatch);
 
             DrawGameStatus(spriteBatch);
             DrawGameFooter(spriteBatch);
@@ -323,7 +225,7 @@ namespace App05MonoGame
 
             spriteBatch.DrawString(arialFont, status, topLeft, Color.White);
 
-            string game = "Coin Chase";
+            string game = "Kayley asteroids";
             Vector2 gameSize = arialFont.MeasureString(game);
             Vector2 topCentre = new Vector2((HD_Width/2 - gameSize.X/2), 4);
             spriteBatch.DrawString(arialFont, game, topCentre, Color.White);
@@ -343,7 +245,7 @@ namespace App05MonoGame
         {
             int margin = 20;
 
-            string names = "Derek & Andrei";
+            string names = "Kayley Syrett";
             string app = "App05: MonogGame";
             string module = "BNU CO453-2020";
 
