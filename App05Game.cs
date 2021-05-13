@@ -166,7 +166,6 @@ namespace App05MonoGame
         /// This is an enemy Sprite with four animations for the four
         /// directions, up, down, left and right.  Has no intelligence!
         /// </summary>
-
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
@@ -215,7 +214,6 @@ namespace App05MonoGame
             GraphicsDevice.Clear(Color.LawnGreen);
 
             spriteBatch.Begin();
-
 
             spriteBatch.Draw(backgroundImage, Vector2.Zero, Color.White);
 
