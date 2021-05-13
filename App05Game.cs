@@ -7,6 +7,10 @@ using Microsoft.Xna.Framework.Input;
 
 namespace App05MonoGame
 {
+
+    /// <summary>
+    /// This shows the different game states of the game 
+    /// </summary>
     public enum GameStates
     {
         Loading, Running, Won, Lost, Exit
@@ -55,6 +59,9 @@ namespace App05MonoGame
 
         #endregion
 
+        /// <summary>
+        /// This creates the graphics and sets where the content is stored
+        /// </summary>
         public App05Game()
         {
             graphicsManager = new GraphicsDeviceManager(this);
