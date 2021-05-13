@@ -76,7 +76,7 @@ namespace App05MonoGame.Controllers
             asteroids.Add(asteroidSprite);
         }
 
-        public void HasCollided(PlayerSprite player)
+        public void HasCollided(ShipSprite player)
         {
             foreach (Sprite asteroid in asteroids)
             {
@@ -87,8 +87,16 @@ namespace App05MonoGame.Controllers
                     asteroid.IsActive = false;
                     asteroid.IsAlive = false;
                     asteroid.IsVisible = false;
+
+                    player.Health -= 10;
                 }
-            }           
+
+                if (asteroid.Position.X < 0)
+                {
+                    player.Score += 10;
+                }
+            }
+            asteroids.RemoveAll(i => i.Position.X < 0);
         }
 
         public void Update(GameTime gameTime)

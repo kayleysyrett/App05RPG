@@ -7,6 +7,11 @@ using Microsoft.Xna.Framework.Input;
 
 namespace App05MonoGame
 {
+    public enum GameStates
+    {
+        Loading, Running, Won, Lost, Exit
+    }
+
     /// <summary>
     /// This game creates a variety of sprites as an example.  
     /// There is no game to play yet. The spaceShip and the 
@@ -16,7 +21,7 @@ namespace App05MonoGame
     /// random coins and the enemy tries to catch the player.
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Kayley Syrett 
     /// </authors>
     public class App05Game : Game
     {
@@ -39,16 +44,14 @@ namespace App05MonoGame
         private Texture2D backgroundImage;
         private SoundEffect flameEffect;
 
-        private PlayerSprite shipSprite;
+        private ShipSprite shipSprite;
         private Sprite asteroidSprite;
 
         private Button restartButton;
 
         private AsteroidController asteroidController;
 
-        //should be in player 
-        private int score;
-        private int health;
+        private GameStates gameState;
 
         #endregion
 
@@ -71,9 +74,6 @@ namespace App05MonoGame
             graphicsManager.ApplyChanges();
 
             graphicsDevice = graphicsManager.GraphicsDevice;
-
-            score = 0;
-            health = 100;
 
             asteroidController = new AsteroidController();
 
@@ -116,12 +116,13 @@ namespace App05MonoGame
             SetupSpaceShip();
             SetupAsteroid();
 
+            gameState = GameStates.Loading;
         }
 
         private void RestartButton_click(object sender, System.EventArgs e)
         {
             //TODO: do something when the button is clicked!
-            
+
             Exit();
         }
 
@@ -135,7 +136,7 @@ namespace App05MonoGame
             asteroidController.LoadImages(Content);
             asteroidController.CreateAsteroid();
 
-    }
+        }
 
         /// <summary>
         /// This is a Sprite that can be controlled by a
@@ -147,13 +148,13 @@ namespace App05MonoGame
             Texture2D ship = Content.Load<Texture2D>(
                "Actors/GreenShip");
 
-            shipSprite = new PlayerSprite(ship, 200, 500)
+            shipSprite = new ShipSprite(ship, 200, 500)
             {
                 Direction = new Vector2(1, 0),
                 Speed = 200,
                 DirectionControl = DirectionControl.Rotational
             };
-    }
+        }
 
 
         /// <summary>
@@ -163,23 +164,41 @@ namespace App05MonoGame
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || 
-                Keyboard.GetState().IsKeyDown(Keys.Escape)) Exit();
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+                  Keyboard.GetState().IsKeyDown(Keys.Escape)) Exit();
+
+            if (gameState == GameStates.Loading)
+            {
+                gameState = GameStates.Running;
+            }
+
+            if (gameState == GameStates.Running)
+            {
+                //maybe put a pause method in here 
+
+                restartButton.Update(gameTime);
+
+                // Update Asteroids
+
+                shipSprite.Update(gameTime);
+                asteroidController.Update(gameTime);
+                asteroidController.HasCollided(shipSprite);
+
+                if (shipSprite.Score >= 100)
+                {
+                    gameState = GameStates.Won;
+                }
+                else if (shipSprite.Health <= 0)
+                {
+                    gameState = GameStates.Lost;
+                }
+
+                // Update Chase Game
+
+                base.Update(gameTime);
+            }
 
 
-            //maybe put a pause method in here 
-
-            restartButton.Update(gameTime);
-
-            // Update Asteroids
-
-            shipSprite.Update(gameTime);
-            asteroidController.Update(gameTime);
-            asteroidController.HasCollided(shipSprite);
-
-            // Update Chase Game
-
-            base.Update(gameTime);
         }
 
         /// <summary>
@@ -195,19 +214,33 @@ namespace App05MonoGame
 
             spriteBatch.Draw(backgroundImage, Vector2.Zero, Color.White);
 
-            restartButton.Draw(spriteBatch);
+            if(gameState == GameStates.Running)
+            {
+                restartButton.Draw(spriteBatch);
 
-            // Draw asteroids game
+                // Draw asteroids game
 
-            shipSprite.Draw(spriteBatch);
-            asteroidController.Draw(spriteBatch);
-
-
-            // Draw Chase game
+                shipSprite.Draw(spriteBatch);
+                asteroidController.Draw(spriteBatch);
 
 
-            DrawGameStatus(spriteBatch);
-            DrawGameFooter(spriteBatch);
+                // Draw Chase game
+
+
+                DrawGameStatus(spriteBatch);
+                DrawGameFooter(spriteBatch);
+            }
+            else
+            {
+                if(gameState == GameStates.Won)
+                {
+                    spriteBatch.DrawString(arialFont, "You have Won!", new Vector2(200, 600), Color.White);
+                }
+                else if(gameState == GameStates.Lost)
+                {
+                    spriteBatch.DrawString(arialFont, "You have Lost!", new Vector2(200, 600), Color.White);
+                }
+            }
 
             spriteBatch.End();
             base.Draw(gameTime);
@@ -219,19 +252,20 @@ namespace App05MonoGame
         /// </summary>
         public void DrawGameStatus(SpriteBatch spriteBatch)
         {
-            Vector2 topLeft = new Vector2(4, 4);
-            string status = $"Score = {score:##0}";
+            int margin = 50;
+            Vector2 topLeft = new Vector2(margin, 4);
+            string status = $"Score = {shipSprite.Score:##0}";
 
             spriteBatch.DrawString(arialFont, status, topLeft, Color.White);
 
             string game = "Kayley asteroids";
             Vector2 gameSize = arialFont.MeasureString(game);
-            Vector2 topCentre = new Vector2((HD_Width/2 - gameSize.X/2), 4);
+            Vector2 topCentre = new Vector2((HD_Width / 2 - gameSize.X / 2), 4);
             spriteBatch.DrawString(arialFont, game, topCentre, Color.White);
 
-            string healthText = $"Health = {health}%";
+            string healthText = $"Health = {shipSprite.Health}%";
             Vector2 healthSize = arialFont.MeasureString(healthText);
-            Vector2 topRight = new Vector2(HD_Width - (healthSize.X + 4), 4);
+            Vector2 topRight = new Vector2(HD_Width - (healthSize.X + margin), 4);
             spriteBatch.DrawString(arialFont, healthText, topRight, Color.White);
 
         }
@@ -242,7 +276,7 @@ namespace App05MonoGame
         /// </summary>
         public void DrawGameFooter(SpriteBatch spriteBatch)
         {
-            int margin = 20;
+            int margin = 50;
 
             string names = "Kayley Syrett";
             string app = "App05: MonogGame";
@@ -251,7 +285,7 @@ namespace App05MonoGame
             Vector2 namesSize = calibriFont.MeasureString(names);
             Vector2 appSize = calibriFont.MeasureString(app);
 
-            Vector2 bottomCentre = new Vector2((HD_Width - namesSize.X)/ 2, HD_Height - margin);
+            Vector2 bottomCentre = new Vector2((HD_Width - namesSize.X) / 2, HD_Height - margin);
             Vector2 bottomLeft = new Vector2(margin, HD_Height - margin);
             Vector2 bottomRight = new Vector2(HD_Width - appSize.X - margin, HD_Height - margin);
 
