@@ -139,10 +139,8 @@ namespace App05MonoGame
         /// </summary>
         private void SetupAsteroid()
         {
-
             asteroidController.LoadImages(Content);
             asteroidController.CreateAsteroid();
-
         }
 
         /// <summary>
